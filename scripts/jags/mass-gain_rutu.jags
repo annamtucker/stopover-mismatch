@@ -1,0 +1,121 @@
+# mass gain model for ruddy turnstone
+# including indirect effect of water temperature
+
+model{
+  
+  # year-specific parameters #
+  for(i in 2:n.years){
+    mu1[i] <- wmax.mu 
+    wmax[i] ~ dnorm(mu1[i], tau1)
+    
+    mu2[i] <- wmin.mu
+    wmin[i] ~ dnorm(mu2[i], tau2)
+    
+    mu3[i] <- b.mu + beta[1]*ifsa_sc[i] + beta[2]*spawn_sc[i] + beta[3]*ifsa_sc[i]*spawn_sc[i]
+    b[i] ~ dnorm(mu3[i], tau3)T(0,)
+    
+    mu4[i] <- p.mu + beta[4]*ifsa_sc[i] + beta[5]*spawn_sc[i] + beta[6]*ifsa_sc[i]*spawn_sc[i]
+    p[i] ~ dnorm(mu4[i], tau4)
+    
+    wdiff[i] <- wmax[i] - wmin[i]
+  }
+  
+  wdiff[1] <- wmax.mu - wmin.mu
+  b[1] <- b.mu
+  p[1] <- p.mu
+  wmin[1] <- wmin.mu
+  wmax[1] <- wmax.mu
+  
+  # predicted mass over season #
+  for(i in 1:n.years){
+    for(j in 1:n.days){
+      mean.weight[i,j] <- wmax[i] + ((wmin[i] - wmax[i])/
+                                       (1 + (j/p[i])^b[i]))
+    }
+  }
+  
+  # likelihood #
+  
+  for(i in 1:n.ind){
+    
+    w[i] ~ dnorm(mean.weight[year[i],d[i]], tau.catch[c[i]])
+    
+    # posterior predictive check 
+    predicted[i] <- mean.weight[year[i], d[i]]
+    sq.resid[i] <- pow(w[i] - predicted[i], 2)
+    
+    w.new[i] ~ dnorm(mean.weight[year[i], d[i]], tau.catch[c[i]])
+    sq.resid.new[i] <- pow(w.new[i] - predicted[i], 2)
+    
+  }
+  
+  fit <- sum(sq.resid[])
+  fit.new <- sum(sq.resid.new[])
+  test <- step(fit.new - fit)
+  bayesp <- mean(test)
+  
+  
+  
+  # estimate effect of water temperature
+  # impute missing values for ifsa and spawn
+  for(i in 1:n.years){
+    ifsa_sc[i] ~ dnorm(ifsa.mean, ifsa.tau)
+    
+    pred_spawn[i] <- alpha[1] + alpha[2]*n15_sc[i]
+    spawn_sc[i] ~ dnorm(pred_spawn[i], spawn.tau)
+  }
+  
+  for(i in 1:2){
+    alpha[i] ~ dnorm(0, 0.001)
+  }
+  
+  ifsa.mean ~ dnorm(0, 0.001)
+  ifsa.sig ~ dunif(0, 5)
+  ifsa.tau <- pow(ifsa.sig, -2)
+  
+  spawn.sig ~ dunif(0, 5)
+  spawn.tau <- pow(spawn.sig, -2)
+  
+  
+  
+  # PRIORS AND CONSTRAINTS #
+  
+  # growth model hyperparameters
+  s
+  sigma1 ~ dunif(0, 50)
+  sigma2 ~ dunif(0, 50)
+  sigma3 ~ dunif(0, 10)
+  sigma4 ~ dunif(0, 10)
+  
+  tau1 <- pow(sigma1, -2)
+  tau2 <- pow(sigma2, -2)
+  tau3 <- pow(sigma3, -2)
+  tau4 <- pow(sigma4, -2)
+  
+  wmax.mu ~ dunif(90, 300)
+  wmin.mu ~ dunif(80, 150)
+  b.mu ~ dunif(0, 20)
+  p.mu ~ dunif(0, 40)
+  wdiff.mu <- wmax.mu - wmin.mu
+  
+  # within-catch variance (random effect)
+  # no difference in using uniform or gamma prior for variance
+  mu.sig ~ dunif(0, 50)
+  # sig.sig ~ dunif(0, 20)
+  sig.sig ~ dgamma(1, 0.01)  
+  
+  for(i in 1:n.catches){
+    sig.catch[i] ~ dnorm(mu.sig, sig.sig)T(0,)
+    tau.catch[i] <- pow(sig.catch[i], -2)
+  }
+  
+  # indicator variable selection -- slab and spike priors
+  for(i in 1:6){
+    ind[i] ~ dbern(0.5)
+    ssb[i,1] ~ dnorm(0, 999999999999)
+    ssb[i,2] ~ dnorm(0, 0.01)
+    beta[i] <- ssb[i,ind[i]+1]
+  }
+  
+  
+}
