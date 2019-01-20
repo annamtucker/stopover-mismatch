@@ -1,6 +1,6 @@
 # model results
-reknmod = readRDS("rekn_mass-gain-2.rds")
-rutumod = readRDS("rutu_mass-gain-2.rds")
+# reknmod = readRDS("rekn_mass-gain-2.rds")
+# rutumod = readRDS("rutu_mass-gain-2.rds")
 
 
 # covariates ----

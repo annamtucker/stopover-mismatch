@@ -1,7 +1,7 @@
 # tables and figures
 
-reknmod = readRDS("rekn_mass-gain-2.rds")
-rutumod = readRDS("rutu_mass-gain-2.rds")
+reknmod = readRDS("output/rekn_mass-gain-2.rds")
+rutumod = readRDS("output/rutu_mass-gain-2.rds")
 
 source("scripts/05_model-results.R")
 
@@ -133,7 +133,7 @@ write.csv(bind_rows(beta_rekn, beta_rutu),
           file = "output/tab2_betas.csv", row.names = F)
 
 
-# fig 1: cumulative arrivals/spawning ----
+# fig 2: cumulative arrivals/spawning ----
 hsc = read_csv("output/hsc_smooth.csv")
 ifsa_de = read_csv("output/ifsa_de.csv")
 entries = read_csv("output/entry_probs.csv")
@@ -156,7 +156,7 @@ cum_entries <- entries %>%
   geom_point(aes(x = day, y = cum_prob, col = species), size = 2) +
   geom_line(aes(x = day, y = cum_prob, col = species),
             lwd = 1.5, alpha = 0.6) +
-  facet_wrap(~year, scales = "free") +
+  facet_wrap(~year) +
   xlim(0, 40) +
   ylim(0,1) +
   xlab("Days since May 1") +
@@ -172,14 +172,17 @@ cum_entries <- entries %>%
   scale_fill_gradient(name = expression(paste("Statewide spawning abundance (females per"~m^2~")")),
                       breaks = c(0.5, 0.75), 
                       low = pal[2],
-                      high = pal[9]) 
+                      high = pal[9]) +
+  annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf)+
+  annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf)
+
 cum_entries
 
-save_plot(cum_entries, file = "figs/01_entries-spawning.tiff",
+save_plot(cum_entries, file = "figs/02_entries-spawning.tiff",
           base_width = 10, base_height = 8)
 
 
-# fig 2: effect of water temp on spawning ----
+# effect of water temp on spawning ----
 covars = read_csv("output/all_covars.csv")
 
 spawn_temp <- covars %>% 
@@ -194,7 +197,7 @@ save_plot(spawn_temp, file = "figs/02_spawn-temp.tiff",
           base_width = 8, base_height = 6)
 
 
-# fig 3: predicted mass across season ----
+# fig S1: predicted mass across season ----
 
 all.sp.dat = read_csv("output/all_weights.csv")
 
@@ -337,7 +340,7 @@ save_plot(both_pred, file = "figs/03_predicted-mass.tiff",
 
 
 
-# fig 4: year-specific model parameters ----
+# fig 3: year-specific model parameters ----
 striplabs = c("b" = "Maximum\nrate", 
               "p" = "Inflection\npoint",
               "wmax" = "Maximum\naverage mass",
@@ -375,7 +378,7 @@ rate <- both_toplot %>%
   geom_point(aes(y = estimate.x), size = 3) +
   facet_wrap( ~ species, scales = "free") +
   scale_y_continuous(limits = c(0, 45), breaks = seq(0, 45, 10)) +
-  scale_x_continuous(breaks = seq(1997, 2018, 3), name = "Year") +
+  scale_x_continuous(breaks = seq(1997, 2018, 5), name = "Year") +
   theme(strip.background = element_rect(fill = "white"),
         strip.text = element_text(size = 12, margin = margin(b = 5))) +
   ylab("Rate of mass gain\n(g/day)") 
@@ -409,7 +412,7 @@ infpt <- both_toplot %>%
   geom_linerange(aes(ymin = .lower.x, ymax = .upper.x), lwd = 1)+
   geom_point(aes(y = estimate.x), size = 3) +
   facet_wrap( ~ species, scales = "free") +
-  scale_x_continuous(breaks = seq(1997, 2018, 3), name = "Year") +
+  scale_x_continuous(breaks = seq(1997, 2018, 5), name = "Year") +
   scale_y_continuous(limits = c(14, 32), breaks = seq(10, 40, 5)) +
   theme(strip.background = element_rect(fill = "white"),
         strip.text = element_text(size = 12, margin = margin(b = 5))) +
@@ -443,7 +446,7 @@ min <- both_toplot %>%
   geom_linerange(aes(ymin = .lower.x, ymax = .upper.x), lwd = 1)+
   geom_point(aes(y = estimate.x), size = 3) +
   facet_wrap( ~ species, scales = "free") +
-  scale_x_continuous(breaks = seq(1997, 2018, 3), name = "Year") +
+  scale_x_continuous(breaks = seq(1997, 2018, 5), name = "Year") +
   scale_y_continuous(limits = c(80,150), breaks = seq(80, 140, 10)) +
   theme(strip.background = element_rect(fill = "white"),
         strip.text = element_text(size = 12, margin = margin(b = 5))) +
@@ -478,7 +481,7 @@ max <- both_toplot %>%
   geom_linerange(aes(ymin = .lower.x, ymax = .upper.x), lwd = 1)+
   geom_point(aes(y = estimate.x), size = 3) +
   facet_wrap( ~ species, scales = "free") +
-  scale_x_continuous(breaks = seq(1997, 2018, 3), name = "Year") +
+  scale_x_continuous(breaks = seq(1997, 2018, 5), name = "Year") +
   scale_y_continuous(limits = c(120, 220), breaks = seq(120, 240, 20)) +
   theme(strip.background = element_rect(fill = "white"),
         strip.text = element_text(size = 12, margin = margin(b = 5))) +
@@ -521,11 +524,11 @@ yrparms <- plot_grid(rate, rate_dist,
 
 yrparms
 
-save_plot(yrparms, file = "figs/04_year-parms.tiff", 
+save_plot(yrparms, file = "figs/03_year-parms.tiff", 
           base_width = 10, base_height = 12)
 
 
-# fig 5: effect of covariates on timing and rate ----
+# effect of covariates on timing and rate ----
 covlabs = c("1" = "rate ~ ifsa",
             "2" = "rate ~ prop", 
             "3" = "rate ~ ifsa x prop",
@@ -761,7 +764,7 @@ save_plot(fig5, file = "figs/05_rate-pt-hsc.tiff", base_width = 8,
 
 
 
-# fig 6: association between start day and other model parameters ----
+# fig 5: association between start day and other model parameters ----
 convert_parms = function(b, p, wmax, wmin){
   
   mod = expression(wmax + ((wmin - wmax)/(1 + (x/p)^b)))
@@ -811,7 +814,7 @@ convert_parms = function(b, p, wmax, wmin){
 }
 
 
-# hyperparameters
+# to calculate hyperparameters (saved)
 
 rkderivs_g <- rkmod %>% 
   spread_draws(wmax.mu, wmin.mu, p.mu, b.mu, 
@@ -898,6 +901,7 @@ rtderivs <- rtmodparms %>%
 rtderivs = read.csv("output/rutu_derivs.csv")
 rkderivs = read.csv("output/rekn_derivs.csv")
 
+
 rkderivs %>% 
   bind_rows(rtderivs) -> derivs
 
@@ -935,16 +939,17 @@ avgrate_day <- deriv_sum %>%
   filter(!is.na(species)) %>% 
   mutate(species = c("REKN" = "Red knot", "RUTU" = "Ruddy turnstone")[species]) %>% 
   ggplot(aes(x = start, y = mean.rate)) +
-  geom_linerange(aes(ymin = mean.rate.lower, ymax = mean.rate.upper)) +
+  geom_linerange(aes(ymin = mean.rate.lower, ymax = mean.rate.upper), 
+                 lwd = 1, alpha = 0.6) +
   geom_segment(aes(x = start.lower, xend = start.upper, 
-                   yend = mean.rate)) +
-  geom_point(size = 2) +
+                   yend = mean.rate), lwd = 1, alpha = 0.6) +
+  geom_point(size = 3, pch = 21, fill= "gray80", alpha = 0.8) +
   xlab("Start of mass gain (day in May)") +
   ylab("Average rate of\nmass gain (g/day)") +
   facet_wrap(~species, scales = "free") +
-  ylim(0, 30) +
   theme(strip.background = element_rect(fill = "white"))+
-  scale_x_continuous(breaks = seq(5,25,5), limits = c(0, 30))
+  scale_x_continuous(breaks = seq(0, 35, 5), limits = c(0, 30)) +
+  scale_y_continuous(breaks = seq(0, 30, 5), limits = c(0, 30))
 avgrate_day
 
 stopday_day <- deriv_sum %>% 
@@ -954,14 +959,16 @@ stopday_day <- deriv_sum %>%
          stop.low = stop.lower, stop.high = stop.upper) %>% 
   ggplot(aes(x = start,y = stop)) +
   facet_wrap(~species, scales = "free") +
-  geom_linerange(aes(ymin = stop.low, ymax= stop.high)) +
-  geom_segment(aes(x = start.low, xend = start.high, y = stop, yend = stop)) +
-  geom_point(size = 2) +
+  geom_linerange(aes(ymin = stop.low, ymax= stop.high),
+                 lwd = 1, alpha = 0.6) +
+  geom_segment(aes(x = start.low, xend = start.high, y = stop, yend = stop),
+               lwd = 1, alpha = 0.6) +
+  geom_point(size = 3, pch = 21, fill= "gray80", alpha = 0.8) +
   xlab("Start of mass gain (day in May)") +
-  ylab("Stop of mass gain\n(day in May)") +
+  ylab("End of mass gain\n(day in May)") +
   theme(strip.background = element_rect(fill = "white"))+
-  scale_x_continuous(breaks = seq(5,40,5), limits = c(5, 40)) +
-  scale_y_continuous(breaks = seq(15, 40, 5), limits = c(12, 40))
+  scale_x_continuous(breaks = seq(0, 30, 5), limits = c(0, 30)) +
+  scale_y_continuous(breaks = seq(10, 35, 5), limits = c(10, 35))
 stopday_day
 
 
@@ -975,19 +982,47 @@ maxmass_day <- derivs %>%
   mutate(start = start, start.low = start.lower, start.high = start.upper) %>% 
   ggplot(aes(x = start, y = wmax)) +
   facet_wrap(~species, scales = "free") +
-  xlim(0, 30) +
-  geom_linerange(aes(ymin = wmax.lower, ymax = wmax.upper)) +
-  geom_segment(aes(x = start.low, xend = start.high, y = wmax, yend = wmax)) +
-  geom_point(size = 2) +
+  geom_linerange(aes(ymin = wmax.lower, ymax = wmax.upper),
+                 lwd = 1, alpha = 0.6) +
+  geom_segment(aes(x = start.low, xend = start.high, y = wmax, yend = wmax),
+               lwd = 1, alpha = 0.6) +
+  geom_point(size = 3, pch = 21, fill= "gray80", alpha = 0.8) +
   xlab("Start of mass gain (day in May)") +
   ylab("Predicted maximum\naverage mass (g)") +
   theme(strip.background = element_rect(fill = "white")) +
+  scale_x_continuous(breaks = seq(0, 30, 5), limits = c(0, 30)) +
   scale_y_continuous(breaks = seq(120, 240, 20), limits = c(130, 220))
 maxmass_day
 
-start_corr = plot_grid(avgrate_day, stopday_day, maxmass_day, ncol = 2, 
-                       labels = c("A", "B", "C"), scale = 0.9)
-save_plot(start_corr, file = "figs/06_startday-corrs.tiff", base_width = 10, base_height= 7)
+
+duration_day <- derivs %>% 
+  filter(!is.na(start)) %>% 
+  mutate(species = c("REKN" = "Red knot", "RUTU" = "Ruddy turnstone")[species],
+         duration = stop - start) %>% 
+  group_by(year, species) %>% 
+  mean_qi(duration, start) %>% 
+  ungroup() %>% 
+  mutate(year = year+1996)  %>% 
+  mutate(start = start, start.low = start.lower, start.high = start.upper) %>% 
+  ggplot(aes(x = start, y = duration)) +
+  facet_wrap(~species, scales = "free") +
+  geom_linerange(aes(ymin = duration.lower, ymax = duration.upper),
+                 lwd = 1, alpha = 0.6) +
+  geom_segment(aes(x = start.low, xend = start.high, 
+                   y = duration, yend = duration),
+               lwd = 1, alpha = 0.6) +
+  geom_point(size = 3, pch = 21, fill= "gray80", alpha = 0.8) +
+  xlab("Start of mass gain (day in May)") +
+  ylab("Duration of peak refueling (days)") +
+  theme(strip.background = element_rect(fill = "white")) +
+  scale_x_continuous(breaks = seq(0, 30, 5), limits = c(0, 30)) + 
+  scale_y_continuous(breaks = seq(0, 25, 5), limits = c(0, 25))
+duration_day
+  
+start_corr = plot_grid(stopday_day, duration_day, 
+                       avgrate_day, maxmass_day, ncol = 2, 
+                       labels = c("A", "B", "C", "D"), scale = 0.9)
+save_plot(start_corr, file = "figs/04_startday-corrs.tiff", base_width = 10, base_height= 7)
 
 # supporting info ----
 
